@@ -226,6 +226,10 @@ const game = {
         if (this.score > highScore) {
             highScore = this.score;
             highScoreEl.textContent = highScore;
+            // Glückwunsch-Meldung anzeigen
+            setTimeout(() => {
+                alert('Glückwunsch! Neuer Highscore erreicht: ' + highScore);
+            }, 100); // Kurze Verzögerung, um sicherzustellen, dass das DOM aktualisiert wurde
             // Füge die CSS-Klasse hinzu, um den neuen Highscore visuell hervorzuheben
             highScoreEl.classList.add('new-high-score');
             // Entferne die CSS-Klasse nach einer kurzen Verzögerung
