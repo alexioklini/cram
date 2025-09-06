@@ -1,21 +1,31 @@
+// Highscore-Variable im globalen Geltungsbereich
+let highScore = 0;
+const highScoreEl = document.getElementById('high-score');
+
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const statusEl = document.getElementById('status');
 const restartBtn = document.getElementById('restartBtn');
+const scoreEl = document.getElementById('score');
+const pointsContainer = document.getElementById('points-container');
 
 const game = {
     // Spiel-Konstanten
     DIRECTIONS: { RIGHT: 0, DOWN: 1, LEFT: 2, UP: 3 },
     SPEED: 2, // Pixel pro Frame
     COLLISION_TOLERANCE: 2, // Geringere Toleranz für Kollision
+    BEEP_FREQUENCIES: [440, 550, 660, 770], // Frequenzen für die Töne
 
     // Spiel-Zustand
     x: 0,
     y: 0,
     direction: 0,
     path: [],
+    score: 0,
     isRunning: true,
     audioContext: null,
+    backgroundMusic: null,
+    musicStarted: false,
 
     // Initialisierung
     init() {
@@ -23,12 +33,14 @@ const game = {
         this.y = 0;
         this.direction = this.DIRECTIONS.RIGHT;
         this.path = [{ x: 0, y: 0 }];
+        this.score = 0;
         this.isRunning = true;
+        this.updateScore();
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#00FF00'; // Leuchtendes Grün
+        ctx.lineWidth = 4;         // Dickere Linie
+        ctx.lineCap = 'square';      // Blockhafter Stil
         ctx.beginPath();
         ctx.moveTo(this.x, this.y);
 
@@ -39,8 +51,44 @@ const game = {
         this.loop();
     },
 
+    // Hintergrundmusik abspielen
+    playBackgroundMusic() {
+        
+        // Prüfen, ob die Musik bereits gestartet wurde
+        if (this.musicStarted) {
+            
+            return;
+        }
+
+        // Erstellen eines Audio-Objekts für die MP3-Datei
+        const backgroundMusic = new Audio('assets/LSL1_theme.mp3');
+        backgroundMusic.loop = true; // Musik in einer Schleife abspielen
+
+        // Starten der Wiedergabe
+        backgroundMusic.play().catch(e => console.error("Fehler beim Abspielen der Musik:", e));
+        
+
+        // Speichern des Audio-Objekts für spätere Steuerung
+        this.backgroundMusic = backgroundMusic;
+        this.musicStarted = true;
+    },
+
+    // Hintergrundmusik stoppen
+    stopBackgroundMusic() {
+        
+        if (this.backgroundMusic) {
+            
+            this.backgroundMusic.pause();
+            this.backgroundMusic.currentTime = 0;
+            this.backgroundMusic = null;
+            this.musicStarted = false;
+        } else {
+            
+        }
+    },
+
     // Piepton abspielen
-    playBeep() {
+    playBeep(frequency) {
         if (!this.audioContext) {
              // AudioContext bei erster Nutzerinteraktion erstellen
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -49,11 +97,29 @@ const game = {
         const gainNode = this.audioContext.createGain();
         oscillator.connect(gainNode);
         gainNode.connect(this.audioContext.destination);
-        oscillator.frequency.setValueAtTime(800, this.audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
         gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
         oscillator.start(this.audioContext.currentTime);
         oscillator.stop(this.audioContext.currentTime + 0.1);
+    },
+
+    // Kollisionston abspielen
+    playCollisionSound() {
+        if (!this.audioContext) return;
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+
+        oscillator.type = 'sawtooth'; // Eine härtere Wellenform
+        gainNode.gain.setValueAtTime(0.2, this.audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(150, this.audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(50, this.audioContext.currentTime + 0.25);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.25);
+
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + 0.25);
     },
 
     // Kollisionserkennung
@@ -93,6 +159,7 @@ const game = {
 
         // Kollision mit sich selbst
         if (this.checkCollision(newX, newY)) {
+            this.playCollisionSound();
             this.end('Spiel vorbei! Du hast dich selbst berührt.');
             return;
         }
@@ -109,23 +176,115 @@ const game = {
 
     // Spielende
     end(message) {
+        
         this.isRunning = false;
         statusEl.textContent = message;
         restartBtn.style.display = 'block';
+        this.updateHighScore(); // Highscore aktualisieren
+        this.stopBackgroundMusic(); // Stoppe die Hintergrundmusik
+    },
+
+    // Highscore aktualisieren
+    updateHighScore() {
+        if (this.score > highScore) {
+            highScore = this.score;
+            highScoreEl.textContent = highScore;
+        }
     },
 
     // Richtung wechseln
     changeDirection() {
         if (!this.isRunning) return;
+        
+        // Starte die Hintergrundmusik bei der ersten Benutzeraktion
+        if (!this.musicStarted) {
+            this.playBackgroundMusic();
+        }
+        
+        this.calculatePoints();
         this.direction = (this.direction + 1) % 4;
-        this.playBeep();
+        this.playBeep(this.BEEP_FREQUENCIES[this.direction]);
+        const gainedPoints = this.calculatePoints();
+        this.score += gainedPoints;
+        this.updateScore();
+        this.showGainedPoints(gainedPoints, this.x, this.y);
+    },
+
+    // Erzeugt eine visuelle Anzeige für gewonnene Punkte
+    showGainedPoints(points, x, y) {
+        const pointsEl = document.createElement('div');
+        pointsEl.textContent = `+${points}`;
+        pointsEl.className = 'gained-points';
+
+        // Positioniere das Element relativ zum Canvas
+        const canvasRect = canvas.getBoundingClientRect();
+        const containerRect = pointsContainer.getBoundingClientRect();
+
+        pointsEl.style.left = `${x}px`;
+        pointsEl.style.top = `${y}px`;
+
+        pointsContainer.appendChild(pointsEl);
+
+        // Entferne das Element nach der Animation
+        setTimeout(() => {
+            pointsEl.remove();
+        }, 1000); // 1s, passend zur Animationsdauer in CSS
+    },
+
+    // Punktzahl aktualisieren
+    updateScore() {
+        scoreEl.textContent = this.score;
+    },
+
+    // Punkte berechnen und zurückgeben
+    calculatePoints() {
+        // Abstand zu den Wänden
+        const distToTop = this.y;
+        const distToBottom = canvas.height - this.y;
+        const distToLeft = this.x;
+        const distToRight = canvas.width - this.x;
+        const minWallDist = Math.min(distToTop, distToBottom, distToLeft, distToRight);
+
+        // Abstand zum Pfad
+        let minPathDist = Infinity;
+        // Ignoriere die letzten paar Punkte für eine faire Messung
+        const checkablePath = this.path.slice(0, -15);
+        for (const point of checkablePath) {
+            const distance = Math.sqrt((this.x - point.x) ** 2 + (this.y - point.y) ** 2);
+            if (distance < minPathDist) {
+                minPathDist = distance;
+            }
+        }
+        
+        const minOverallDist = Math.min(minWallDist, minPathDist);
+
+        // Bonuspunkte basierend auf der Nähe
+        const bonus = Math.round(100 / (1 + minOverallDist));
+        return 10 + bonus; // 10 Basispunkte + Bonus
     }
 };
 
+// --- Canvas Größenanpassung ---
+function resizeCanvas() {
+    // Canvas an die Größe des Eltern-Containers (main) anpassen
+    const header = document.querySelector('header');
+    const footer = document.querySelector('footer');
+    canvas.width = canvas.parentElement.clientWidth;
+    canvas.height = window.innerHeight - header.offsetHeight - footer.offsetHeight;
+    // Spiel neu starten, um sich an neue Dimensionen anzupassen
+    if (game.isRunning) {
+        game.init();
+    }
+}
+
 // Event-Listener
 document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space') {
+    if (e.code === 'Space' && game.isRunning) {
         e.preventDefault();
+        // Erstelle AudioContext beim ersten Tastendruck, falls noch nicht geschehen
+        if (!game.audioContext) {
+            game.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
         game.changeDirection();
     }
 });
@@ -134,5 +293,8 @@ restartBtn.addEventListener('click', () => {
     game.init();
 });
 
-// Spiel starten
+window.addEventListener('resize', resizeCanvas);
+
+// Spiel initial starten
+resizeCanvas(); // Canvas-Größe initial setzen
 game.init();

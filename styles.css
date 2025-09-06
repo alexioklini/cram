@@ -1,57 +1,117 @@
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
 :root {
-    --primary-text-color: #333;
-    --secondary-text-color: #666;
-    --background-color: #f0f0f0;
-    --canvas-background: white;
-    --button-bg-color: #4CAF50;
-    --button-hover-bg-color: #45a049;
+    --primary-text-color: #00FF00;
+    --background-color: #000;
 }
 
-body {
-    font-family: Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+html, body {
+    height: 100%;
     margin: 0;
+    padding: 0;
     background-color: var(--background-color);
-}
-
-.container {
-    text-align: center;
-}
-
-h1 {
     color: var(--primary-text-color);
-    margin-bottom: 20px;
+    font-family: 'VT323', monospace;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    padding: 10px 20px;
+    border-bottom: 2px solid var(--primary-text-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+main {
+    flex-grow: 1;
+    position: relative; /* Für die Positionierung von #points-container */
+    overflow: hidden;
 }
 
 #gameCanvas {
-    border: 2px solid var(--primary-text-color);
-    background-color: var(--canvas-background);
+    width: 100%;
+    height: 100%;
+    background-color: var(--background-color);
+    border: none;
+    display: block; /* Entfernt möglichen Leerraum unter dem Canvas */
+}
+
+h1 {
+    font-size: 3em;
+    margin: 0;
 }
 
 #gameInfo {
-    margin-top: 20px;
+    display: flex;
+    gap: 20px;
+    align-items: center;
 }
 
-#status {
-    font-weight: bold;
-    color: var(--secondary-text-color);
+#gameInfo p {
+    margin: 0;
+    font-size: 1.5em;
+}
+
+#score, #status {
+    color: var(--primary-text-color);
+    font-size: 1.5em; /* Behält die Schriftgröße bei, aber #gameInfo p ist jetzt der Selektor */
+    margin: 0;
 }
 
 #restartBtn {
-    display: none; /* Standardmäßig ausgeblendet */
-    margin-top: 20px;
-    padding: 10px 20px;
-    font-size: 16px;
-    background-color: var(--button-bg-color);
-    color: white;
+    display: none;
+    background: none;
     border: none;
-    border-radius: 5px;
+    color: var(--primary-text-color);
+    font-family: 'VT323', monospace;
+    font-size: 1.5em;
     cursor: pointer;
+    padding: 10px;
 }
 
 #restartBtn:hover {
-    background-color: var(--button-hover-bg-color);
+    background-color: rgba(0, 255, 0, 0.1);
+}
+
+#points-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 20;
+}
+
+.gained-points {
+    position: absolute;
+    color: var(--primary-text-color);
+    font-weight: bold;
+    font-size: 2em;
+    animation: fade-out-up 1s ease-out forwards;
+}
+
+@keyframes fade-out-up {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+}
+
+footer {
+    padding: 10px 20px;
+    border-top: 2px solid var(--primary-text-color);
+    text-align: center;
+    flex-shrink: 0;
+}
+
+footer span {
+    font-size: 1.5em;
 }
