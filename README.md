@@ -11,7 +11,7 @@ Dieses Projekt wurde kürzlich einem Refactoring und einer visuellen Überarbeit
 - **Responsive Canvas:** Der Spiel-Canvas füllt den ihm zugewiesenen Bereich vollständig aus und passt sich dynamisch an Größenänderungen des Fensters an.
 - **Einfache Steuerung:** Drücke die **Leertaste**, um die Richtung zu wechseln.
 - **Sound-Feedback:** Jeder Richtungswechsel wird durch einen einzigartigen Ton signalisiert. Ein spezieller Soundeffekt wird bei einer Kollision abgespielt.
-- **Hintergrundmusik:** Eine stilistisch angepasste 80er-Jahre-Synthesizer-Melodie im Stil von "Leisure Suit Larry" spielt im Hintergrund. Die bereitgestellte MP3-Datei wird als Hintergrundmusik verwendet.
+- **Hintergrundmusik:** Eine stilistisch angepasste 80er-Jahre-Synthesizer-Melodie im Stil von "Leisure Suit Larry" spielt im Hintergrund. Die bereitgestellten MP3-Dateien werden in einer zufälligen Schleife als Hintergrundmusik verwendet.
 - **Endlos-Modus:** Spiele so lange, bis ein Fehler passiert.
 - **Dynamisches Punktesystem:** Erhalte Punkte für jeden Richtungswechsel. Je näher du an Hindernissen bist, desto mehr Bonuspunkte bekommst du.
 - **Visuelles Feedback:** Bei jedem Richtungswechsel werden die erhaltenen Punkte kurz an der aktuellen Position angezeigt.

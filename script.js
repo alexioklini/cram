@@ -26,6 +26,21 @@ const game = {
     audioContext: null,
     backgroundMusic: null,
     musicStarted: false,
+    
+    // Liste der Soundtracks
+    MUSIC_TRACKS: [
+        'assets/LSL1_beggar.mp3',
+        'assets/LSL1_cabaret.mp3',
+        'assets/LSL1_chapel.mp3',
+        'assets/LSL1_cop.mp3',
+        'assets/LSL1_death.mp3',
+        'assets/LSL1_disco.mp3',
+        'assets/LSL1_doggy.mp3',
+        'assets/LSL1_ending.mp3',
+        'assets/LSL1_robber.mp3',
+        'assets/LSL1_suicide.mp3',
+        'assets/LSL1_theme.mp3'
+    ],
 
     // Initialisierung
     init() {
@@ -53,24 +68,46 @@ const game = {
 
     // Hintergrundmusik abspielen
     playBackgroundMusic() {
-        
+        console.log("playBackgroundMusic aufgerufen, musicStarted:", this.musicStarted);
         // Prüfen, ob die Musik bereits gestartet wurde
         if (this.musicStarted) {
-            
+            console.log("Musik bereits gestartet, return");
             return;
         }
 
-        // Erstellen eines Audio-Objekts für die MP3-Datei
-        const backgroundMusic = new Audio('assets/LSL1_theme.mp3');
-        backgroundMusic.loop = true; // Musik in einer Schleife abspielen
+        // Wähle eine zufällige Musikdatei aus
+        const randomIndex = Math.floor(Math.random() * this.MUSIC_TRACKS.length);
+        const randomTrack = this.MUSIC_TRACKS[randomIndex];
+        console.log("Ausgewählter Track:", randomTrack);
+
+        // Erstellen eines Audio-Objekts für die zufällige MP3-Datei
+        const backgroundMusic = new Audio(randomTrack);
+        console.log("Audio-Objekt erstellt für:", randomTrack);
+        backgroundMusic.loop = false; // Keine Schleife, da der Wechsel durch JavaScript gesteuert wird
+
+        // Event-Listener für das 'ended'-Ereignis hinzufügen
+        backgroundMusic.addEventListener('ended', () => {
+            console.log("Track beendet, starte nächsten");
+            this.playBackgroundMusic(); // Nächstes zufälliges Stück starten
+        });
 
         // Starten der Wiedergabe
-        backgroundMusic.play().catch(e => console.error("Fehler beim Abspielen der Musik:", e));
-        
+        console.log("Rufe play() auf");
+        backgroundMusic.play().then(() => {
+            console.log("Musik erfolgreich gestartet");
+        }).catch(e => {
+            console.error("Fehler beim Abspielen der Musik:", e);
+            // Versuche es erneut nach einer kurzen Verzögerung
+            setTimeout(() => {
+                console.log("Versuche Musik erneut zu starten");
+                this.playBackgroundMusic();
+            }, 1000);
+        });
 
         // Speichern des Audio-Objekts für spätere Steuerung
         this.backgroundMusic = backgroundMusic;
         this.musicStarted = true;
+        console.log("Musik gestartet, backgroundMusic gesetzt");
     },
 
     // Hintergrundmusik stoppen
@@ -189,18 +226,26 @@ const game = {
         if (this.score > highScore) {
             highScore = this.score;
             highScoreEl.textContent = highScore;
+            // Füge die CSS-Klasse hinzu, um den neuen Highscore visuell hervorzuheben
+            highScoreEl.classList.add('new-high-score');
+            // Entferne die CSS-Klasse nach einer kurzen Verzögerung
+            setTimeout(() => {
+                highScoreEl.classList.remove('new-high-score');
+            }, 2000);
         }
     },
 
     // Richtung wechseln
     changeDirection() {
         if (!this.isRunning) return;
-        
+
+        console.log("changeDirection aufgerufen, musicStarted:", this.musicStarted);
         // Starte die Hintergrundmusik bei der ersten Benutzeraktion
         if (!this.musicStarted) {
+            console.log("Starte Hintergrundmusik");
             this.playBackgroundMusic();
         }
-        
+
         this.calculatePoints();
         this.direction = (this.direction + 1) % 4;
         this.playBeep(this.BEEP_FREQUENCIES[this.direction]);
