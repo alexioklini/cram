@@ -44,10 +44,11 @@ const game = {
 
     // Initialisierung
     init() {
-        this.x = 0;
-        this.y = 0;
+        // Setze den Startpunkt in die Mitte des Canvas
+        this.x = Math.floor(canvas.width / 2);
+        this.y = Math.floor(canvas.height / 2);
         this.direction = this.DIRECTIONS.RIGHT;
-        this.path = [{ x: 0, y: 0 }];
+        this.path = [{ x: this.x, y: this.y }];
         this.score = 0;
         this.isRunning = true;
         this.updateScore();
@@ -223,12 +224,12 @@ const game = {
 
     // Highscore aktualisieren
     updateHighScore() {
-        if (this.score > highScore) {
-            highScore = this.score;
-            highScoreEl.textContent = highScore;
+        if (this.score > this.highScore) {
+            this.highScore = this.score;
+            highScoreEl.textContent = this.highScore;
             // Glückwunsch-Meldung anzeigen
             setTimeout(() => {
-                alert('Glückwunsch! Neuer Highscore erreicht: ' + highScore);
+                alert('Glückwunsch! Neuer Highscore erreicht: ' + this.highScore);
             }, 100); // Kurze Verzögerung, um sicherzustellen, dass das DOM aktualisiert wurde
             // Füge die CSS-Klasse hinzu, um den neuen Highscore visuell hervorzuheben
             highScoreEl.classList.add('new-high-score');
@@ -310,7 +311,10 @@ const game = {
         // Bonuspunkte basierend auf der Nähe
         const bonus = Math.round(100 / (1 + minOverallDist));
         return 10 + bonus; // 10 Basispunkte + Bonus
-    }
+    },
+    
+    // Füge highScore als Eigenschaft des Spielobjekts hinzu
+    highScore: 0
 };
 
 // --- Canvas Größenanpassung ---
@@ -347,3 +351,8 @@ window.addEventListener('resize', resizeCanvas);
 // Spiel initial starten
 resizeCanvas(); // Canvas-Größe initial setzen
 game.init();
+
+// Exportiere das Spielobjekt und die resizeCanvas-Funktion für Tests
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { game, resizeCanvas };
+}
